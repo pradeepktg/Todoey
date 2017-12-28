@@ -8,7 +8,10 @@
 
 import UIKit
 import RealmSwift
-class CategoryViewController: UITableViewController {
+import ChameleonFramework
+
+
+class CategoryViewController: SwipeTableViewController {
 
   let realm = try! Realm()
   var categoryArray: Results<Category>?
@@ -17,6 +20,7 @@ class CategoryViewController: UITableViewController {
         super.viewDidLoad()
       
      loadCategory()
+    tableView.rowHeight = 80.0
   
     }
   
@@ -26,16 +30,25 @@ class CategoryViewController: UITableViewController {
     
     return categoryArray?.count ?? 1
   }
-  
-  
+
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     
-    let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
+    let cell = super.tableView(tableView, cellForRowAt: indexPath)
+    if let category = categoryArray?[indexPath.row] {
     
-   
+//    cell.textLabel?.text =  category.name ?? "No Category added yet"
+//    cell.backgroundColor = UIColor(hexString:category.color ?? "1D9BF6")
+//    cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+      
+      cell.textLabel?.text =  category.name
+      
+      guard let categoryColor = UIColor(hexString:category.color) else {fatalError()}
+      
+      cell.backgroundColor = categoryColor
+      cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+    }
     
-    cell.textLabel?.text =  categoryArray?[indexPath.row].name ?? "No Category added yet"
-    
+    //1D9BF6
     
     return cell
     
@@ -76,6 +89,7 @@ class CategoryViewController: UITableViewController {
       
       let newCategory = Category()
       newCategory.name = newCategoryTextField.text!
+      newCategory.color = UIColor.randomFlat.hexValue()
       self.saveCategory(category: newCategory)
       
      
@@ -96,6 +110,21 @@ class CategoryViewController: UITableViewController {
   }
   
   //MARK:- Model Manipulation Methods
+  
+  override func updateModel(at indexPath: IndexPath) {
+    
+          if let categoryForDeletion = self.categoryArray?[indexPath.row] {
+            do {
+              try self.realm.write {
+                self.realm.delete(categoryForDeletion)
+              }
+            } catch {
+              print("Error deleting the category: \(error)")
+            }
+    
+          }
+    
+  }
   
   func saveCategory(category: Category) {
     
@@ -121,3 +150,6 @@ class CategoryViewController: UITableViewController {
   }
   
 }
+
+
+
